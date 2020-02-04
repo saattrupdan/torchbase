@@ -104,7 +104,7 @@ class Module:
         elif self.criterion == 'binary_cross_entropy':
             self.criterion = torch.nn.BCELoss()
         elif self.criterion == 'categorical_cross_entropy':
-            self.criterion = torch.nn.CrossEntropyLoss()
+            self.criterion = torch.nn.NLLLoss()
         elif self.criterion == 'neg_log_likelihood':
             self.criterion = torch.nn.NLLLoss()
         elif self.criterion == 'binary_cross_entropy_with_logits':
@@ -391,7 +391,6 @@ class Module:
                     yhat = self.forward(xtrain)
                     loss = self.criterion(yhat, ytrain)
                     loss.backward()
-                    train_metric_vals[0] = float(loss)
                     self.optimiser.step()
 
                     # Exponentially moving average of training metrics
@@ -402,13 +401,13 @@ class Module:
                     for idx, metric in enumerate(train_metrics):
                         if not isinstance(metric, str):
                             if idx == 0:
-                                metric_val = train_metric_vals[0]
+                                metric_val = float(loss)
                             else:
                                 yhat = yhat > 0.5
                                 metric_val = float(metric(yhat, ytrain))
                             train_metric_vals[idx] = \
                                 smoothing * train_metric_vals[idx] + \
-                                (1 - smoothing) * float(metric(yhat, ytrain))
+                                (1 - smoothing) * metric_val
 
                     # Bias correction
                     exponent = epoch * nsamples 
@@ -472,7 +471,7 @@ class Module:
                 if overwrite:
                     for f in self.data_dir.glob(f'{self.model_name}*.pt'): 
                         f.unlink()
-                self.save(f'{self.model_name}_{scores[-1]:.4f}_{monitor}')
+                self.save(f'{scores[-1]:.4f}_{monitor}')
 
             # Stop if score has not improved for <patience> many epochs
             if score_cmp(best_score, scores[-1]):
