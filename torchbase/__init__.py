@@ -1,1 +1,1 @@
-from .modules import Module, magic
+from .decorators import magic
