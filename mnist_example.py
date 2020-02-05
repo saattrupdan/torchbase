@@ -17,19 +17,19 @@ def get_mnist_dataloaders():
 
     return train_dl, val_dl
 
-@magic(criterion = 'categorical_cross_entropy')
-class MLP(torch.nn.Module):
-    def __init__(self, dim: int = 100) -> None:
+@magic(criterion = 'categorical_cross_entropy', metrics = 'accuracy')
+class Net(torch.nn.Module):
+    def __init__(self, dim: int = 100):
         super().__init__()
         self.fc = torch.nn.Linear(28 * 28, dim)
         self.out = torch.nn.Linear(dim, 10)
 
     def forward(self, x):
-        x = x.view(x.shape[0], -1)
+        x = torch.flatten(x, start_dim = 1)
         x = torch.nn.functional.gelu(self.fc(x))
-        return torch.nn.functional.log_softmax(self.out(x), dim = -1)
+        return self.out(x)
 
 if __name__ == '__main__':
     train_dl, val_dl = get_mnist_dataloaders()
-    model = MLP(dim = 100).fit(train_dl, val_dl)
-    model.plot(['loss'])
+    model = Net().fit(train_dl, val_dl)
+    model.plot('accuracy')
