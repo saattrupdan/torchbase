@@ -17,7 +17,8 @@ def magic(cls: Module,
     criterion: Metriclike = 'binary_cross_entropy',
     optimiser: Optimiserlike = 'adamw',
     scheduler: nSchedulerlike = 'reduce_on_plateau',
-    data_dir: Pathlike = '.',
+    metrics: Metriclikes = [],
+    data_dir: Pathlike = '.data',
     verbose: int = 1) -> Wrapper:
     ''' Adds more functionality to a PyTorch Module. '''
 
@@ -30,6 +31,3 @@ def magic(cls: Module,
         _verbose = verbose
 
     return MagicModule
-
-#def inheritdoc(func):
-#    
