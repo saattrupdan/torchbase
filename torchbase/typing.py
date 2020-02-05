@@ -1,4 +1,4 @@
-from typing import Callable, List, Union, Iterable, TypeVar, Sequence
+from typing import Callable, Sequence, Union, Iterable, TypeVar, Sequence
 from pathlib import Path
 from torch import Tensor
 
@@ -10,12 +10,12 @@ nStr = Union[str, None]
 Numeric = Union[int, float]
 nNumeric = Union[Numeric, None]
 
-# Lists of basic types
-Ints = List[int]
-Floats = List[float]
-Bools = List[bool]
-Strs = List[str]
-Numerics = List[Numeric]
+# Sequences of basic types
+Ints = Sequence[int]
+Floats = Sequence[float]
+Bools = Sequence[bool]
+Strs = Sequence[str]
+Numerics = Sequence[Numeric]
 
 Tensor = Sequence[Numeric]
 Wrapper = TypeVar('Wrapper')
@@ -25,8 +25,8 @@ Pathlike = Union[Path, str]
 
 Metric = Callable[[Tensor, Tensor], float]
 Metriclike = Union[Metric, str]
-Metrics = List[Metric]
-Metriclikes = List[Metriclike]
+Metrics = Sequence[Metric]
+Metriclikes = Sequence[Metriclike]
 
 Optimiser = TypeVar('Optimiser')
 Optimiserlike = Union[Optimiser, str]
