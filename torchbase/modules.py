@@ -4,7 +4,7 @@ from pathlib import Path
 from functools import cmp_to_key
 from .training import train_model
 from .plotting import plot
-from .utils import str2crit, str2optim, str2sched
+from .utils import str2metric, str2optim, str2sched, str2crit
 from .io import save, save_model, load
 from .typing import *
 
@@ -30,6 +30,7 @@ class ModuleWrapper:
     _optimiser = None
     _scheduler = None
     _criterion = None
+    _metrics = None
     _data_dir = None
     _verbose = None
 
@@ -41,6 +42,8 @@ class ModuleWrapper:
     plot = plot
 
     def __init__(self, *args, **kwargs):
+        from .metrics import Metric
+
         self.model = type(self)._model_class(*args, **kwargs)
         self.model_name = type(self)._model_class.__name__
         self.optimiser = type(self)._optimiser
@@ -48,7 +51,7 @@ class ModuleWrapper:
         self.criterion = type(self)._criterion
         self.data_dir = Path(str(type(self)._data_dir))
         self.verbose = type(self)._verbose
-        self.history = {}
+        self.history = {'loss': [], 'val_loss': []}
 
         # Initialise criterion, optimiser and scheduler
         if isinstance(self.criterion, str):
@@ -57,6 +60,18 @@ class ModuleWrapper:
             self.optimiser = str2optim(self.optimiser, self.model)
         if isinstance(self.scheduler, str):
             self.scheduler = str2sched(self.scheduler, self.optimiser)
+
+        # Initialise metrics
+        if not isinstance(type(self)._metrics, list):
+            metrics = {type(self)._metrics}
+        else:
+            metrics = type(self)._metrics
+        metrics.add('loss')
+        metrics = {metric for metric in metrics if metric[:4] != 'val_'}
+        self.metrics = [Metric(metric, self, val = False) 
+                        for metric in metrics]
+        self.metrics += [Metric(metric, self, val = True) 
+                         for metric in metrics]
 
         # Set up logging
         logging.basicConfig()

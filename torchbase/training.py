@@ -2,7 +2,6 @@ import torch
 from tqdm.auto import tqdm
 from itertools import count
 from functools import cmp_to_key
-from .utils import getname
 from .typing import *
 
 def train_model(wrapper: Wrapper,
@@ -13,12 +12,13 @@ def train_model(wrapper: Wrapper,
     minimise_monitor: nBool = None,
     target_value: nFloat = None,
     patience: nNumeric = 10,
-    smoothing: float = 0.999, 
+    smoothing: float = 0.99, 
     pred_threshold: float = 0.5, 
     save_model: bool = True,
-    overwrite: bool = True,
-    #train_metrics: Floats = [],
-    metrics: Metriclikes = []) -> Wrapper:
+    overwrite: bool = True) -> Wrapper:
+
+    # Alias the loss function
+    crit = wrapper.criterion
 
     # Set epochs and patience to infinity if they are None
     if epochs is None: epochs = float('inf')
@@ -26,54 +26,15 @@ def train_model(wrapper: Wrapper,
     if monitor is None:
         monitor = 'loss' if val_loader is None else 'val_loss'
 
-    ## Construct list of training metric names
-    #train_metric_names = []
-    #train_metrics = ['loss'] + train_metrics
-    #for train_metric in train_metrics:
-    #    if isinstance(train_metric, str): 
-    #        train_metric_names.append(train_metric)
-    #    elif isinstance(train_metric, Metric):
-    #        train_metric_names.append(train_metric.__name__)
-    #    else:
-    #        train_metric_names.append(type(train_metric).__name__)
-
-    ## Construct list of validation metric names
-    #val_metric_names = []
-    #val_metrics = ['loss'] + val_metrics
-    #for val_metric in val_metrics:
-    #    if isinstance(val_metric, str): 
-    #        val_metric_names.append('val_' + val_metric)
-    #    elif isinstance(val_metric, Metric):
-    #        val_metric_names.append('val_' + val_metric.__name__)
-    #    else:
-    #        val_metric_names.append('val_' + type(val_metric).__name__)
-
-    ## Initialise training metrics
-    #for idx, metric in enumerate(train_metrics):
-    #    if metric == 'loss':
-    #        train_metrics[idx] = wrapper.criterion
-
-    ## Initialise validation metrics
-    #for idx, metric in enumerate(val_metrics):
-    #    if metric == 'loss':
-    #        val_metrics[idx] = wrapper.criterion
-
-    metric_data = [(getname(metric), str2metric(metric, wrapper), 0.) 
-                   for metric in metrics]
-
-    # Initialise history
-    if wrapper.history == {}:
-        for name, _, _ in metric_data: 
-            wrapper.history[name] = []
-
-    # Initialise the number of bad epochs; i.e. epochs with no improvement
-    bad_epochs = 0
-
-    # Initialise starting epoch
-    if wrapper.history != {}:
-        start_epoch = len(wrapper.history[list(wrapper.history.keys())[0]])
-    else:
-        start_epoch = 0
+    # Bundle together the metrics and their names and values
+    metric_data = {
+        metric.name: {
+            'metric': metric, 
+            'value': 0.,
+            'train': metric.name[:4] != 'val_'
+        }
+        for metric in wrapper.metrics
+    }
 
     # Initialise minimise_monitor
     if minimise_monitor is None:
@@ -88,21 +49,27 @@ def train_model(wrapper: Wrapper,
         best_score = float('inf')
     else:
         score_cmp = lambda x, y: x > y
-        best_score = 0
+        best_score = 0.
 
-    # Initialise list of scores.
+    # Initialise history
+    for name in metric_data.keys():
+        if wrapper.history.get(name) is None:
+            wrapper.history[name] = []
+        elif wrapper.history[name]:
+            metric_data[name]['value'] = wrapper.history[name][-1]
+
+    # Initialise scores.
     # We're working with all scores rather than the current score since
     # lists are mutable and floats are not, allowing us to update
     # the score on the fly
     scores = wrapper.history[monitor]
+    best_score = max([best_score] + scores, key = cmp_to_key(score_cmp))
 
-    # If we're resuming training then fetch the best score
-    if start_epoch > 0:
-        for idx, name in enumerate(train_metric_names):
-            train_metric_vals[idx] = wrapper.history[name][-1]
-        for idx, name in enumerate(val_metric_names):
-            val_metric_vals[idx] = wrapper.history[name][-1]
-        best_score = max(scores, key = cmp_to_key(score_cmp))
+    # Initialise starting epoch
+    start_epoch = len(wrapper.history['loss'])
+
+    # Initialise the number of bad epochs; i.e. epochs with no improvement
+    bad_epochs = 0
 
     # Training announcement
     ntrain = len(train_loader) * train_loader.batch_size
@@ -136,15 +103,12 @@ def train_model(wrapper: Wrapper,
             epoch_pbar.set_description(f'Epoch {epoch:2d}')
             for idx, (xtrain, ytrain) in enumerate(train_loader):
 
-                # Batch announcement
-                wrapper.logger.debug(f'Commencing batch {idx}')
-
                 # Reset the gradients
                 wrapper.optimiser.zero_grad()
 
                 # Do a forward pass, calculate loss and backpropagate
                 yhat = wrapper.forward(xtrain)
-                loss = wrapper.criterion(yhat, ytrain)
+                loss = crit(yhat, ytrain)
                 loss.backward()
                 wrapper.optimiser.step()
 
@@ -152,35 +116,40 @@ def train_model(wrapper: Wrapper,
                 # Note: The float() is there to copy the loss by value
                 #       and not by reference, to allow it to be garbage
                 #       collected and avoid an excessive memory leak
-                yhat = yhat.detach()
-                for idx, metric in enumerate(train_metrics):
-                    if not isinstance(metric, str):
-                        if idx == 0:
-                            metric_val = float(loss)
-                        else:
-                            yhat = yhat > 0.5
-                            metric_val = float(metric(yhat, ytrain))
-                        train_metric_vals[idx] = \
-                            smoothing * train_metric_vals[idx] + \
-                            (1 - smoothing) * metric_val
+                for name, data in metric_data.items():
+                    if data['train']:
 
-                # Bias correction
-                exponent = epoch * nsamples 
-                exponent += (idx + 1) * train_loader.batch_size
-                exponent /= 1 - smoothing
-                for idx in range(len(train_metric_vals)):
-                    train_metric_vals[idx] /= 1 - smoothing ** exponent
+                        # Get metric value
+                        if name == 'loss':
+                            value = float(loss)
+                        else:
+                            value = data['metric'](yhat.detach(), ytrain)
+
+                        # Moving average
+                        value = smoothing * data['value'] + \
+                                (1 - smoothing) * value
+
+                        # Bias correction
+                        exponent = epoch * nsamples 
+                        exponent += (idx + 1) * train_loader.batch_size
+                        exponent /= 1 - smoothing
+                        value /= 1 - smoothing ** exponent
+
+                        # Update the metric value
+                        metric_data[name]['value'] = value
 
                 # Update progress bar description
                 desc = f'Epoch {epoch:2d}'
-                for idx, name in enumerate(train_metric_names):
-                    desc += f' - {name} {train_metric_vals[idx]:.4f}'
+                for name, data in metric_data.items():
+                    if data['train']:
+                        desc += f' - {name} {data["value"]:.4f}'
                 epoch_pbar.set_description(desc)
                 epoch_pbar.update(train_loader.batch_size)
 
             # Add training scores to history
-            for n, v in zip(train_metric_names, train_metric_vals):
-                wrapper.history[n].append(v)
+            for name, data in metric_data.items():
+                if data['train']:
+                    wrapper.history[name].append(data['value'])
 
             # Compute validation metrics
             if val_loader is not None:
@@ -189,37 +158,38 @@ def train_model(wrapper: Wrapper,
                     # Enable validation mode
                     wrapper.eval()
 
-                    # Initialise validation metrics
-                    for idx in range(len(val_metric_vals)): 
-                        val_metric_vals[idx] = 0.
-
                     for xval, yval in val_loader:
                         yhat = wrapper.forward(xval)
-                        for idx, metric in enumerate(val_metrics):
-                            if not isinstance(metric, str):
-                                val_metric_vals[idx] += metric(yhat, yval)
+                        for name, data in metric_data.items():
+                            if not data['train']:
+                                if name == 'val_loss':
+                                    value = float(crit(yhat, yval))
+                                else:
+                                    value = data['metric'](yhat.detach(), yval)
+                                metric_data[name]['value'] += value
 
                     # Calculate average values of validation metrics
-                    for idx in range(len(val_metric_vals)):
-                        val_metric_vals[idx] /= len(val_loader)
+                    for name, data in metric_data.items():
+                        if not data['train']:
+                            metric_data[name]['value'] /= len(val_loader)
 
-                    # Add validation scores to history
-                    for n, v in zip(val_metric_names, val_metric_vals):
-                        wrapper.history[n].append(v)
+                    # Add training scores to history
+                    for name, data in metric_data.items():
+                        if not data['train']:
+                            wrapper.history[name].append(data['value'])
 
                     # Update progress bar description
                     desc = f'Epoch {epoch:2d}'
-                    for n, v in zip(train_metric_names, train_metric_vals):
-                        desc += f' - {n} {v:.4f}'
-                    for n, v in zip(val_metric_names, val_metric_vals):
-                        desc += f' - {n} {v:.4f}'
+                    for name, data in metric_data.items():
+                        desc += f' - {name} {data["value"]:.4f}'
                     epoch_pbar.set_description(desc)
 
         # Add score to learning scheduler
         if wrapper.scheduler is not None: wrapper.scheduler.step(scores[-1])
 
         # Save model if score is best so far
-        if score_cmp(scores[-1], best_score):  best_score = scores[-1]
+        if score_cmp(scores[-1], best_score):  
+            best_score = scores[-1]
 
         # Delete older models and save the current one
         if save_model:
@@ -236,9 +206,9 @@ def train_model(wrapper: Wrapper,
                                  'training.')
 
                 # Load the model with the best score
-                glob = wrapper.data_dir.glob(f'{wrapper.model_name}*.pt')
-                if save_model and list(glob):
-                    checkpoint = torch.load(next(glob))
+                glob = list(wrapper.data_dir.glob(f'{wrapper.model_name}*.pt'))
+                if save_model and glob != []:
+                    checkpoint = torch.load(glob[0])
                     wrapper.history = checkpoint['history']
                     wrapper.load_state_dict(checkpoint['model_state_dict'])
 
