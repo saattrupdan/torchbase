@@ -1,10 +1,11 @@
 import torch
 import torch.optim.lr_scheduler as sched
+from .decorators import changename
 from .typing import *
-from .metrics import accuracy, samples_f1
+from .metrics import *
 
 def str2optim(optimiser: Optimiserlike, model: Module) -> Optimiser:
-    if isinstance(optimiser, Optimiser):
+    if not isinstance(optimiser, str):
         return optimiser
     elif optimiser == 'adam':
         return torch.optim.Adam(model.parameters())
@@ -25,28 +26,8 @@ def str2optim(optimiser: Optimiserlike, model: Module) -> Optimiser:
     else:
         raise RuntimeError(f'Optimiser {optimiser} not found.')
 
-def str2crit(criterion: Metriclike) -> Metric:
-    if isinstance(criterion, Metric):
-        return criterion
-    elif criterion == 'mean_absolute_error':
-        return torch.nn.L1Loss()
-    elif criterion == 'mean_squared_error':
-        return torch.nn.MSELoss()
-    elif criterion == 'binary_cross_entropy':
-        return torch.nn.BCELoss()
-    elif criterion == 'categorical_cross_entropy':
-        return torch.nn.CrossEntropyLoss()
-    elif criterion == 'neg_log_likelihood':
-        return torch.nn.NLLLoss()
-    elif criterion == 'binary_cross_entropy_with_logits':
-        return torch.nn.BCEWithLogitsLoss()
-    elif criterion == 'ctc':
-        return torch.nn.CTCLoss()
-    else:
-        raise RuntimeError(f'Criterion {criterion} not found.')
-
 def str2sched(scheduler: str, optimiser: Optimiser) -> Scheduler:
-    if isinstance(scheduler, Scheduler):
+    if not isinstance(scheduler, str):
         return scheduler
     elif scheduler == 'reduce_on_plateau':
         return sched.ReduceLROnPlateau(optimiser)
@@ -61,8 +42,31 @@ def str2sched(scheduler: str, optimiser: Optimiser) -> Scheduler:
     else:
         raise RuntimeError(f'Scheduler {scheduler} not found.')
 
+def str2crit(criterion: Metriclike) -> Metric:
+    if not isinstance(criterion, str):
+        return criterion
+    else:
+        if criterion == 'mean_absolute_error':
+            criterion = torch.nn.L1Loss()
+        elif criterion == 'mean_squared_error':
+            criterion = torch.nn.MSELoss()
+        elif criterion == 'binary_cross_entropy':
+            criterion = torch.nn.BCELoss()
+        elif criterion == 'categorical_cross_entropy':
+            criterion = torch.nn.CrossEntropyLoss()
+        elif criterion == 'neg_log_likelihood':
+            criterion = torch.nn.NLLLoss()
+        elif criterion == 'binary_cross_entropy_with_logits':
+            criterion = torch.nn.BCEWithLogitsLoss()
+        elif criterion == 'ctc':
+            criterion = torch.nn.CTCLoss()
+        else:
+            raise RuntimeError(f'Criterion {criterion} not found.')
+        criterion.__name__ = 'loss'
+        return criterion
+
 def str2metric(metric: Metriclike, wrapper: Wrapper) -> Metric:
-    if isinstance(metric, Metric):
+    if not isinstance(metric, str):
         return metric
     else:
         puremetric = metric.replace('val_', '')
@@ -70,13 +74,11 @@ def str2metric(metric: Metriclike, wrapper: Wrapper) -> Metric:
             return wrapper.criterion
         elif puremetric == 'accuracy':
             return accuracy
+        elif puremetric == 'accuracy_with_logits':
+            return accuracy_with_logits
         elif puremetric == 'samples_f1':
             return samples_f1
+        elif puremetric == 'samples_f1_with_logits':
+            return samples_f1_with_logits
         else:
             raise RuntimeError(f'Metric {metric} not found.')
-
-def getname(thing: object):
-    if isinstance(thing, str): 
-        return thing
-    else: 
-        return thing.__name__
