@@ -3,7 +3,7 @@ from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 from itertools import count
 from functools import cmp_to_key
-from .utils import Metric
+from .utils import getname
 from .typing import *
 
 def train_model(wrapper: Wrapper,
@@ -18,8 +18,8 @@ def train_model(wrapper: Wrapper,
     pred_threshold: float = 0.5, 
     save_model: bool = True,
     overwrite: bool = True,
-    train_metrics: Floats = [],
-    val_metrics: Floats = []) -> Wrapper:
+    #train_metrics: Floats = [],
+    metrics: Metriclikes = []) -> Wrapper:
 
     # Set epochs and patience to infinity if they are None
     if epochs is None: epochs = float('inf')
@@ -27,45 +27,44 @@ def train_model(wrapper: Wrapper,
     if monitor is None:
         monitor = 'loss' if val_loader is None else 'val_loss'
 
-    # Construct list of training metric names
-    train_metric_names = []
-    train_metrics = ['loss'] + train_metrics
-    for train_metric in train_metrics:
-        if isinstance(train_metric, str): 
-            train_metric_names.append(train_metric)
-        elif isinstance(train_metric, Metric):
-            train_metric_names.append(train_metric.__name__)
-        else:
-            train_metric_names.append(type(train_metric).__name__)
+    ## Construct list of training metric names
+    #train_metric_names = []
+    #train_metrics = ['loss'] + train_metrics
+    #for train_metric in train_metrics:
+    #    if isinstance(train_metric, str): 
+    #        train_metric_names.append(train_metric)
+    #    elif isinstance(train_metric, Metric):
+    #        train_metric_names.append(train_metric.__name__)
+    #    else:
+    #        train_metric_names.append(type(train_metric).__name__)
 
-    # Construct list of validation metric names
-    val_metric_names = []
-    val_metrics = ['loss'] + val_metrics
-    for val_metric in val_metrics:
-        if isinstance(val_metric, str): 
-            val_metric_names.append('val_' + val_metric)
-        elif isinstance(val_metric, Metric):
-            val_metric_names.append('val_' + val_metric.__name__)
-        else:
-            val_metric_names.append('val_' + type(val_metric).__name__)
+    ## Construct list of validation metric names
+    #val_metric_names = []
+    #val_metrics = ['loss'] + val_metrics
+    #for val_metric in val_metrics:
+    #    if isinstance(val_metric, str): 
+    #        val_metric_names.append('val_' + val_metric)
+    #    elif isinstance(val_metric, Metric):
+    #        val_metric_names.append('val_' + val_metric.__name__)
+    #    else:
+    #        val_metric_names.append('val_' + type(val_metric).__name__)
 
-    # Initialise training metrics
-    for idx, metric in enumerate(train_metrics):
-        if metric == 'loss':
-            train_metrics[idx] = wrapper.criterion
+    ## Initialise training metrics
+    #for idx, metric in enumerate(train_metrics):
+    #    if metric == 'loss':
+    #        train_metrics[idx] = wrapper.criterion
 
-    # Initialise validation metrics
-    for idx, metric in enumerate(val_metrics):
-        if metric == 'loss':
-            val_metrics[idx] = wrapper.criterion
+    ## Initialise validation metrics
+    #for idx, metric in enumerate(val_metrics):
+    #    if metric == 'loss':
+    #        val_metrics[idx] = wrapper.criterion
 
-    # Initialise metric values
-    train_metric_vals = [0. for _ in train_metrics]
-    val_metric_vals = [0. for _ in val_metrics]
+    metric_data = [(getname(metric), str2metric(metric, wrapper), 0.) 
+                   for metric in metrics]
 
     # Initialise history
     if wrapper.history == {}:
-        for name in set(train_metric_names).union(val_metric_names): 
+        for name, _, _ in metric_data: 
             wrapper.history[name] = []
 
     # Initialise the number of bad epochs; i.e. epochs with no improvement
