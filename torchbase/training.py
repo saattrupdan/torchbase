@@ -1,5 +1,4 @@
 import torch
-from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 from itertools import count
 from functools import cmp_to_key
@@ -239,7 +238,7 @@ def train_model(wrapper: Wrapper,
                 # Load the model with the best score
                 glob = wrapper.data_dir.glob(f'{wrapper.model_name}*.pt')
                 if save_model and list(glob):
-                    checkpoint = torch.load(path)
+                    checkpoint = torch.load(next(glob))
                     wrapper.history = checkpoint['history']
                     wrapper.load_state_dict(checkpoint['model_state_dict'])
 

@@ -35,7 +35,7 @@ def str2crit(criterion: Metriclike) -> Metric:
     elif criterion == 'binary_cross_entropy':
         return torch.nn.BCELoss()
     elif criterion == 'categorical_cross_entropy':
-        return torch.nn.NLLLoss()
+        return torch.nn.CrossEntropyLoss()
     elif criterion == 'neg_log_likelihood':
         return torch.nn.NLLLoss()
     elif criterion == 'binary_cross_entropy_with_logits':
@@ -45,11 +45,19 @@ def str2crit(criterion: Metriclike) -> Metric:
     else:
         raise RuntimeError(f'Criterion {criterion} not found.')
 
-def str2sched(scheduler: Schedulerlike, optimiser: Optimiser) -> Scheduler:
+def str2sched(scheduler: str, optimiser: Optimiser) -> Scheduler:
     if isinstance(scheduler, Scheduler):
         return scheduler
     elif scheduler == 'reduce_on_plateau':
-        return sched.ReduceLROnPlateau(optimizer = optimiser)
+        return sched.ReduceLROnPlateau(optimiser)
+    elif scheduler == 'one_cycle':
+        return sched.OneCycleLR(optimiser, max_lr = 1.)
+    elif scheduler == 'cyclic':
+        return sched.CyclicLR(optimiser, base_lr = 1e-4, max_lr = 1.)
+    elif scheduler == 'step':
+        return sched.StepLR(optimiser, step_size = 5)
+    elif scheduler == 'exp':
+        return sched.ExponentialLR(optimiser, gamma = 0.1)
     else:
         raise RuntimeError(f'Scheduler {scheduler} not found.')
 

@@ -1,4 +1,4 @@
-from typing import Callable, List, Union, Iterable, TypeVar, Sequence
+from typing import Callable, Sequence, Union, Iterable, TypeVar, Sequence
 from pathlib import Path
 import torch
 
@@ -10,7 +10,7 @@ nStr = Union[str, None]
 Numeric = Union[int, float]
 nNumeric = Union[Numeric, None]
 
-# Lists of basic types
+# Sequences of basic types
 Ints = Sequence[int]
 Floats = Sequence[float]
 Bools = Sequence[bool]
