@@ -27,6 +27,8 @@ Metric = Callable[[Numerics, Numerics], float]
 Metriclike = Union[Metric, str]
 Metrics = Sequence[Metric]
 Metriclikes = Sequence[Metriclike]
+MetriclikesOrString = Union[Metriclikes, str]
+nMetriclikesOrString = Union[Metriclikes, str, None]
 
 # Optimisers
 Optimiser = TypeVar('Optimiser')
@@ -47,3 +49,4 @@ Module = torch.nn.Module
 Wrapper = TypeVar('Wrapper')
 Decorator = Callable[[Callable], Callable]
 Pathlike = Union[Path, str]
+Function = Callable
