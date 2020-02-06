@@ -1,9 +1,12 @@
 import torch
 import torch.optim.lr_scheduler as sched
 from .typing import *
+from .metrics import accuracy, samples_f1
 
-def str2optim(optimiser: str, model: Module) -> Optimiser:
-    if optimiser == 'adam':
+def str2optim(optimiser: Optimiserlike, model: Module) -> Optimiser:
+    if isinstance(optimiser, Optimiser):
+        return optimiser
+    elif optimiser == 'adam':
         return torch.optim.Adam(model.parameters())
     elif optimiser == 'adadelta':
         return torch.optim.AdaDelta(model.parameters())
@@ -22,8 +25,10 @@ def str2optim(optimiser: str, model: Module) -> Optimiser:
     else:
         raise RuntimeError(f'Optimiser {optimiser} not found.')
 
-def str2crit(criterion: str) -> Metric:
-    if criterion == 'mean_absolute_error':
+def str2crit(criterion: Metriclike) -> Metric:
+    if isinstance(criterion, Metric):
+        return criterion
+    elif criterion == 'mean_absolute_error':
         return torch.nn.L1Loss()
     elif criterion == 'mean_squared_error':
         return torch.nn.MSELoss()
@@ -40,8 +45,30 @@ def str2crit(criterion: str) -> Metric:
     else:
         raise RuntimeError(f'Criterion {criterion} not found.')
 
-def str2sched(scheduler: str, optimiser: Optimiser) -> Scheduler:
-    if scheduler == 'reduce_on_plateau':
+def str2sched(scheduler: Schedulerlike, optimiser: Optimiser) -> Scheduler:
+    if isinstance(scheduler, Scheduler):
+        return scheduler
+    elif scheduler == 'reduce_on_plateau':
         return sched.ReduceLROnPlateau(optimizer = optimiser)
     else:
-        raise RuntimeError(f'Scheduler {self.scheduler} not found.')
+        raise RuntimeError(f'Scheduler {scheduler} not found.')
+
+def str2metric(metric: Metriclike, wrapper: Wrapper) -> Metric:
+    if isinstance(metric, Metric):
+        return metric
+    else:
+        puremetric = metric.replace('val_', '')
+        if puremetric == 'loss':
+            return wrapper.criterion
+        elif puremetric == 'accuracy':
+            return accuracy
+        elif puremetric == 'samples_f1':
+            return samples_f1
+        else:
+            raise RuntimeError(f'Metric {metric} not found.')
+
+def getname(thing: object):
+    if isinstance(thing, str): 
+        return thing
+    else: 
+        return thing.__name__
