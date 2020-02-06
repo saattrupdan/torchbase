@@ -1,6 +1,6 @@
 from typing import Callable, List, Union, Iterable, TypeVar, Sequence
 from pathlib import Path
-from torch import Tensor
+import torch
 
 # Basic types
 nInt = Union[int, None]
@@ -11,30 +11,39 @@ Numeric = Union[int, float]
 nNumeric = Union[Numeric, None]
 
 # Lists of basic types
-Ints = List[int]
-Floats = List[float]
-Bools = List[bool]
-Strs = List[str]
-Numerics = List[Numeric]
+Ints = Sequence[int]
+Floats = Sequence[float]
+Bools = Sequence[bool]
+Strs = Sequence[str]
+Numerics = Sequence[Numeric]
 
-Tensor = Sequence[Numeric]
-Wrapper = TypeVar('Wrapper')
-Module = TypeVar('Module')
-Decorator = Callable[[Callable], Callable]
-Pathlike = Union[Path, str]
+# Tensors
+Tensor = torch.Tensor
+FloatTensor = torch.FloatTensor
+LongTensor = torch.LongTensor
 
-Metric = Callable[[Tensor, Tensor], float]
+# Metrics
+Metric = Callable[[Numerics, Numerics], float]
 Metriclike = Union[Metric, str]
-Metrics = List[Metric]
-Metriclikes = List[Metriclike]
+Metrics = Sequence[Metric]
+Metriclikes = Sequence[Metriclike]
 
+# Optimisers
 Optimiser = TypeVar('Optimiser')
 Optimiserlike = Union[Optimiser, str]
 nOptimiserlike = Union[Optimiser, str, None]
 
+# Schedulers
 Scheduler = TypeVar('Scheduler')
 Schedulerlike = Union[Scheduler, str]
 nSchedulerlike = Union[Scheduler, str, None]
 
+# DataLoaders
 DataLoader = Iterable[Tensor]
 nDataLoader = Union[DataLoader, None]
+
+# Misc
+Module = torch.nn.Module
+Wrapper = TypeVar('Wrapper')
+Decorator = Callable[[Callable], Callable]
+Pathlike = Union[Path, str]
