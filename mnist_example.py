@@ -17,7 +17,7 @@ def get_mnist_dataloaders():
 
     return train_dl, val_dl
 
-@magic(criterion = 'categorical_cross_entropy', metrics = 'accuracy')
+@magic('categorical_cross_entropy', metrics = 'accuracy_with_logits')
 class Net(torch.nn.Module):
     def __init__(self, dim: int = 100):
         super().__init__()
@@ -31,5 +31,6 @@ class Net(torch.nn.Module):
 
 if __name__ == '__main__':
     train_dl, val_dl = get_mnist_dataloaders()
-    model = Net().fit(train_dl, val_dl)
-    model.plot('accuracy')
+    net = Net()
+    net.fit(train_dl, val_dl)
+    net.plot(['accuracy', 'val_accuracy'])
