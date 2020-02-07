@@ -4,7 +4,7 @@ A simple decorator that allows you to `fit` and `plot` your PyTorch model.
 
 Requires `torch`, `tqdm` and `matplotlib`.
 
-**This project is in early development. Brace yourself, breaking changes are coming**
+**This project is in early development. Brace yourselves, breaking changes are coming.**
 
 ## MNIST example
 See `mnist_example.py` for the full example, but here are the essential parts:
