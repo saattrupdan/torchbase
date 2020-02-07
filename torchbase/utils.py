@@ -1,38 +1,47 @@
 import torch
+import torch.optim.adam as adam
+import torch.optim.adadelta as adadelta
+import torch.optim.adagrad as adagrad 
+import torch.optim.adamw as adamw
+import torch.optim.sparse_adam as sparse_adam
+import torch.optim.adamax as adamax
+import torch.optim.rmsprop as rmsprop
+import torch.optim.sgd as sgd
 import torch.optim.lr_scheduler as sched
 from .decorators import changename
 from .typing import *
-from .metrics import *
+from .metrics import (accuracy, accuracy_with_logits, 
+                      samples_f1, samples_f1_with_logits)
 
 def str2optim(optimiser: Optimiserlike, model: Module) -> Optimiser:
     if not isinstance(optimiser, str):
         return optimiser
     elif optimiser == 'adam':
-        return torch.optim.Adam(model.parameters())
+        return adam.Adam(model.parameters())
     elif optimiser == 'adadelta':
-        return torch.optim.AdaDelta(model.parameters())
+        return adadelta.Adadelta(model.parameters())
     elif optimiser == 'adagrad':
-        return torch.optim.AdaGrad(model.parameters())
+        return adagrad.Adagrad(model.parameters())
     elif optimiser == 'adamw':
-        return torch.optim.AdamW(model.parameters())
+        return adamw.AdamW(model.parameters())
     elif optimiser == 'sparse_adam':
-        return torch.optim.SparseAdam(model.parameters())
+        return sparse_adam.SparseAdam(model.parameters())
     elif optimiser == 'adamax':
-        return torch.optim.Adamax(model.parameters())
+        return adamax.Adamax(model.parameters())
     elif optimiser == 'rmsprop':
-        return torch.optim.RMSProp(model.parameters())
+        return rmsprop.RMSprop(model.parameters())
     elif optimiser == 'sgd':
-        return torch.optim.SGD(model.parameters())
+        return sgd.SGD(model.parameters(), lr = 3e-4)
     else:
         raise RuntimeError(f'Optimiser {optimiser} not found.')
 
-def str2sched(scheduler: str, optimiser: Optimiser) -> Scheduler:
+def str2sched(scheduler: Schedulerlike, optimiser: Optimiser,
+    dataloader: DataLoader, epochs: Numeric, patience: Numeric) -> Scheduler:
     if not isinstance(scheduler, str):
         return scheduler
     elif scheduler == 'reduce_on_plateau':
-        return sched.ReduceLROnPlateau(optimiser)
-    elif scheduler == 'one_cycle':
-        return sched.OneCycleLR(optimiser, max_lr = 1.)
+        if not isinstance(patience, int): patience = 20
+        return sched.ReduceLROnPlateau(optimiser, patience = patience // 2)
     elif scheduler == 'cyclic':
         return sched.CyclicLR(optimiser, base_lr = 1e-4, max_lr = 1.)
     elif scheduler == 'step':
@@ -42,7 +51,7 @@ def str2sched(scheduler: str, optimiser: Optimiser) -> Scheduler:
     else:
         raise RuntimeError(f'Scheduler {scheduler} not found.')
 
-def str2crit(criterion: Metriclike) -> Metric:
+def str2crit(criterion: Criterionlike) -> Criterion:
     if not isinstance(criterion, str):
         return criterion
     else:
@@ -62,10 +71,10 @@ def str2crit(criterion: Metriclike) -> Metric:
             criterion = torch.nn.CTCLoss()
         else:
             raise RuntimeError(f'Criterion {criterion} not found.')
-        criterion.__name__ = 'loss'
+        type(criterion).__name__ = 'loss'
         return criterion
 
-def str2metric(metric: Metriclike, wrapper: Wrapper) -> Metric:
+def str2function(metric: Functionlike, wrapper: Wrapper) -> Function:
     if not isinstance(metric, str):
         return metric
     else:

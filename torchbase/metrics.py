@@ -2,11 +2,11 @@ import torch
 from .decorators import changename
 from .typing import *
 
-class Metric:
-    def __init__(self, metric: Metriclike, wrapper: Wrapper, val: bool):
-        from .utils import str2metric
-        self.metric = str2metric(metric, wrapper)
-
+class MetricObject:
+    def __init__(self, metric: Functionlike, wrapper: Wrapper, val: bool):
+        from .utils import str2function
+        self.metric = str2function(metric, wrapper)
+        
         try:
             self.name = self.metric.__name__.lower()
         except AttributeError:
@@ -17,7 +17,7 @@ class Metric:
     def __call__(self, pred: Tensor, true: Tensor) -> float:
         return self.metric(pred, true)
 
-def accuracy(pred: FloatTensor, true: Tensor) -> float:
+def accuracy(pred: Tensor, true: Tensor) -> float:
     if pred.shape != true.shape:
         true = torch.nn.functional.one_hot(true, num_classes = pred.shape[-1])
     pred = torch.gt(pred, 0.5)
@@ -25,7 +25,7 @@ def accuracy(pred: FloatTensor, true: Tensor) -> float:
     return torch.mean(correct.float()).item()
 
 @changename('accuracy')
-def accuracy_with_logits(pred: FloatTensor, true: Tensor) -> float:
+def accuracy_with_logits(pred: Tensor, true: Tensor) -> float:
     return accuracy(torch.nn.functional.softmax(pred, dim = -1), true)
 
 def samples_f1(pred: Tensor, true: Tensor) -> float:

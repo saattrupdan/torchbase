@@ -19,16 +19,16 @@ def plot(wrapper: Wrapper,
         fig, ax = plt.subplots()
 
         if metrics is None:
-            metrics = wrapper.metrics
+            metric_names = [metric.name for metric in wrapper.metrics]
         elif isinstance(metrics, str): 
-            metrics = [metric for metric in wrapper.metrics 
+            metric_names = [metric.name for metric in wrapper.metrics 
                        if metric.name == metrics]
-        elif isinstance(metrics, list): 
-            metrics = [metric for metric in wrapper.metrics 
+        else: 
+            metric_names = [metric.name for metric in wrapper.metrics 
                        if metric.name in metrics]
 
-        for metric in metrics: 
-            ax.plot(wrapper.history[metric.name], label = metric.name)
+        for name in metric_names: 
+            ax.plot(wrapper.history[name], label = name)
 
         if show_legend: ax.legend(loc = 'best')
         if title is not None: ax.set_title(title)

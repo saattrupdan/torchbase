@@ -1,6 +1,10 @@
-from typing import Callable, Sequence, Union, Iterable, TypeVar, Sequence
+from typing import Callable, Sequence, Union, Iterable, TypeVar, Sequence 
 from pathlib import Path
 import torch
+import torch.utils.data as data
+import torch.optim.optimizer as optim
+import torch.optim.lr_scheduler as sched
+import torch.nn.modules.loss as loss
 
 # Basic types
 nInt = Union[int, None]
@@ -22,8 +26,24 @@ Tensor = torch.Tensor
 FloatTensor = torch.FloatTensor
 LongTensor = torch.LongTensor
 
+# A type with the same signature as Metric, to fool MyPy
+class MetricType:
+    __name__: str = ''
+    def __init__(self, *args, **kwargs):
+        self.metric = None
+        self.name = None
+    def __call__(self, pred: Tensor, true: Tensor) -> float: pass
+
+# Functions
+Function = Callable
+Functionlike = Union[Function, str]
+
+# Criterions
+Criterion = loss._Loss
+Criterionlike = Union[loss._Loss, str]
+
 # Metrics
-Metric = Callable[[Numerics, Numerics], float]
+Metric = MetricType
 Metriclike = Union[Metric, str]
 Metrics = Sequence[Metric]
 Metriclikes = Sequence[Metriclike]
@@ -31,22 +51,49 @@ MetriclikesOrString = Union[Metriclikes, str]
 nMetriclikesOrString = Union[Metriclikes, str, None]
 
 # Optimisers
-Optimiser = TypeVar('Optimiser')
-Optimiserlike = Union[Optimiser, str]
-nOptimiserlike = Union[Optimiser, str, None]
+Optimiser = optim.Optimizer
+Optimiserlike = Union[optim.Optimizer, str]
+nOptimiserlike = Union[optim.Optimizer, str, None]
 
 # Schedulers
-Scheduler = TypeVar('Scheduler')
-Schedulerlike = Union[Scheduler, str]
-nSchedulerlike = Union[Scheduler, str, None]
+Scheduler = Union[sched._LRScheduler, sched.ReduceLROnPlateau]
+Schedulerlike = Union[sched._LRScheduler, str]
+nSchedulerlike = Union[sched._LRScheduler, str, None]
 
 # DataLoaders
-DataLoader = Iterable[Tensor]
-nDataLoader = Union[DataLoader, None]
+DataLoader = data.DataLoader
+nDataLoader = Union[data.DataLoader, None]
 
 # Misc
 Module = torch.nn.Module
-Wrapper = TypeVar('Wrapper')
-Decorator = Callable[[Callable], Callable]
+Decorator = Callable
 Pathlike = Union[Path, str]
-Function = Callable
+
+# A type with the same signature as ModuleWrapper, to fool MyPy
+class Wrapper:
+    def __init__(self, *args, **kwargs):
+        self.model = None
+        self.criterion = None
+        self.optimiser = None
+        self.scheduler = None
+        self.metrics = None
+        self.history = None
+        self.data_dir = None
+        self.model_name = None
+        self.logger = None
+    def trainable_params(self) -> int: pass
+    def fit(*args, **kwargs): pass
+    def save(self, postfix: str): pass
+    def save_model(self, postfix: str): pass
+    def load(self, *args, **kwargs): pass
+    def plot(self, *args, **kwargs): pass
+    def is_cuda(self) -> bool: pass
+    def forward(self, tensor: Tensor) -> Tensor: pass
+    def __call__(self, tensor: Tensor) -> Tensor: pass
+    def __repr__(*args, **kwargs): pass
+    def train(*args, **kwargs): pass
+    def eval(*args, **kwargs): pass
+    def to(*args, **kwargs): pass
+    def cuda(*args, **kwargs): pass
+    def cpu(*args, **kwargs): pass
+    def load_state_dict(*args, **kwargs): pass

@@ -2,6 +2,7 @@ import torch
 from tqdm.auto import tqdm
 from itertools import count
 from functools import cmp_to_key
+from .utils import str2sched
 from .typing import *
 
 def train_model(wrapper: Wrapper,
@@ -25,6 +26,15 @@ def train_model(wrapper: Wrapper,
     if patience is None: patience = float('inf')
     if monitor is None:
         monitor = 'loss' if val_loader is None else 'val_loss'
+
+    # Initialise scheduler
+    if isinstance(wrapper.scheduler, str):
+        wrapper.scheduler = str2sched(wrapper.scheduler, 
+            optimiser = wrapper.optimiser, 
+            dataloader = train_loader,
+            epochs = epochs,
+            patience = patience
+        )
 
     # Bundle together the metrics and their names and values
     metric_data = {
@@ -130,7 +140,7 @@ def train_model(wrapper: Wrapper,
                                 (1 - smoothing) * value
 
                         # Bias correction
-                        exponent = epoch * nsamples 
+                        exponent: float = epoch * nsamples 
                         exponent += (idx + 1) * train_loader.batch_size
                         exponent /= 1 - smoothing
                         value /= 1 - smoothing ** exponent

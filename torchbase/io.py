@@ -23,7 +23,7 @@ def save_model(wrapper: Wrapper, postfix: str = '') -> Wrapper:
     torch.save(wrapper.model, path)
     return wrapper
 
-def load(cls: Wrapper, model_name: str, data_dir: Pathlike = '.') -> Wrapper:
+def load(cls: type, model_name: str, data_dir: Pathlike = '.') -> Wrapper:
 
     # Fetch the full model path
     path = next(Path(str(data_dir)).glob(f'{model_name}*.pt'))

@@ -22,7 +22,7 @@ def magic(cls: Module,
     scheduler: nSchedulerlike = 'reduce_on_plateau',
     metrics: MetriclikesOrString = [],
     data_dir: Pathlike = '.data',
-    verbose: int = 1) -> Wrapper:
+    verbose: int = 1) -> type:
     ''' Adds more functionality to a PyTorch Module. '''
     from .modules import ModuleWrapper
 

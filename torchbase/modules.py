@@ -4,7 +4,7 @@ from pathlib import Path
 from functools import cmp_to_key
 from .training import train_model
 from .plotting import plot
-from .utils import str2metric, str2optim, str2sched, str2crit
+from .utils import str2optim, str2crit
 from .io import save, save_model, load
 from .typing import *
 
@@ -38,11 +38,11 @@ class ModuleWrapper:
     fit = train_model
     save = save
     save_model = save_model
-    load = load
     plot = plot
+    load = classmethod(load)
 
     def __init__(self, *args, **kwargs):
-        from .metrics import Metric
+        from .metrics import MetricObject
 
         self.model = type(self)._model_class(*args, **kwargs)
         self.model_name = type(self)._model_class.__name__
@@ -58,20 +58,20 @@ class ModuleWrapper:
             self.criterion = str2crit(self.criterion)
         if isinstance(self.optimiser, str):
             self.optimiser = str2optim(self.optimiser, self.model)
-        if isinstance(self.scheduler, str):
-            self.scheduler = str2sched(self.scheduler, self.optimiser)
 
         # Initialise metrics
         if not isinstance(type(self)._metrics, list):
-            metrics = {type(self)._metrics}
+            unique_metrics = {type(self)._metrics}
         else:
-            metrics = type(self)._metrics
-        metrics.add('loss')
-        metrics = {metric for metric in metrics if metric[:4] != 'val_'}
-        self.metrics = [Metric(metric, self, val = False) 
-                        for metric in metrics]
-        self.metrics += [Metric(metric, self, val = True) 
-                         for metric in metrics]
+            unique_metrics = type(self)._metrics
+        unique_metrics.add('loss')
+        unique_metrics = {metric for metric in unique_metrics 
+                          if metric[:4] != 'val_'}
+        sorted_metrics = ['loss'] + sorted(unique_metrics - {'loss'})
+        self.metrics = [MetricObject(metric, self, val = False) 
+                        for metric in sorted_metrics]
+        self.metrics += [MetricObject(metric, self, val = True) 
+                         for metric in sorted_metrics]
 
         # Set up logging
         logging.basicConfig()
@@ -94,7 +94,7 @@ class ModuleWrapper:
     def is_cuda(self) -> bool:
         return next(self.model.parameters()).is_cuda
 
-    def forward(self, *args, **kwargs) -> Tensor:
+    def forward(self, *args, **kwargs):
         return self.model.forward(*args, **kwargs)
 
     def __call__(self, *args, **kwargs):
