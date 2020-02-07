@@ -118,7 +118,15 @@ def train_model(wrapper: Wrapper,
 
                 # Do a forward pass, calculate loss and backpropagate
                 yhat = wrapper.forward(xtrain)
-                loss = crit(yhat, ytrain)
+                try:
+                    loss = crit(yhat, ytrain)
+                except ValueError:
+                    raise ValueError(f'The shape of the prediction, '\
+                        f'{yhat.shape}, is different to the shape of '\
+                        f'the target value, {ytrain.shape}, which is not '\
+                        f'allowed when using the loss function {type(crit)}. '\
+                        f'Maybe you need to change it to a categorical '\
+                        f'variant?')
                 loss.backward()
                 wrapper.optimiser.step()
 
