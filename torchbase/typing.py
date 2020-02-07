@@ -20,6 +20,7 @@ Floats = Sequence[float]
 Bools = Sequence[bool]
 Strs = Sequence[str]
 Numerics = Sequence[Numeric]
+Iterable = Iterable
 
 # Tensors
 Tensor = torch.Tensor
