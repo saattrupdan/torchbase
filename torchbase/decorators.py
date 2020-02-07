@@ -5,9 +5,12 @@ from .typing import *
 def parametrised(decorator: Decorator) -> Decorator:
     ''' A meta-decorator that enables parameters in inner decorator. '''
     def parametrised_decorator(*args, **kwargs):
-        def repl(cls: Module):
-            return decorator(cls, *args, **kwargs)
-        return repl
+        if not kwargs and len(args) == 1 and isinstance(args[0], type):
+            return decorator(args[0])
+        else:
+            def repl(cls: type):
+                return decorator(cls, *args, **kwargs)
+            return repl
     return parametrised_decorator
 
 @parametrised
