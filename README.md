@@ -1,4 +1,4 @@
-# TorchBase
+# TorchBase ![Image of a baseball](gfx/baseball.png)
 
 A simple decorator that allows you to `fit` and `plot` your PyTorch model.
 
