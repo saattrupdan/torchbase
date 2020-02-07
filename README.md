@@ -1,4 +1,4 @@
-# <img alt="TorchBase" src="gfx/title.png" height=30px><img alt="Image of a baseball" src="gfx/baseball.png" height=30px>
+# <img alt="TorchBase" src="gfx/title.png" height=50px><img alt="Image of a baseball" src="gfx/baseball.png" height=30px>
 
 A simple decorator that allows you to `fit` and `plot` your PyTorch model.
 
