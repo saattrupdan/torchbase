@@ -63,7 +63,7 @@ class ModuleWrapper:
         if not isinstance(type(self)._metrics, list):
             unique_metrics = {type(self)._metrics}
         else:
-            unique_metrics = type(self)._metrics
+            unique_metrics = set(type(self)._metrics)
         unique_metrics.add('loss')
         unique_metrics = {metric for metric in unique_metrics 
                           if metric[:4] != 'val_'}
