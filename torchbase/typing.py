@@ -26,14 +26,6 @@ Tensor = torch.Tensor
 FloatTensor = torch.FloatTensor
 LongTensor = torch.LongTensor
 
-# A type with the same signature as Metric, to fool MyPy
-class MetricType:
-    __name__: str = ''
-    def __init__(self, *args, **kwargs):
-        self.metric = None
-        self.name = None
-    def __call__(self, pred: Tensor, true: Tensor) -> float: pass
-
 # Functions
 Function = Callable
 Functionlike = Union[Function, str]
@@ -42,8 +34,15 @@ Functionlike = Union[Function, str]
 Criterion = loss._Loss
 Criterionlike = Union[loss._Loss, str]
 
+# A type with the same signature as Metric, to fool MyPy
+class Metric:
+    __name__: str = ''
+    def __init__(self, *args, **kwargs):
+        self.metric = None
+        self.name = None
+    def __call__(self, pred: Tensor, true: Tensor) -> float: pass
+
 # Metrics
-Metric = MetricType
 Metriclike = Union[Metric, str]
 Metrics = Sequence[Metric]
 Metriclikes = Sequence[Metriclike]
