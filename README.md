@@ -43,8 +43,8 @@ Epoch 20 - loss 0.0090 - accuracy 0.9967 - val_loss 0.0879 - val_accuracy 0.9808
 ## Documentation
 
 ### `magic` decorator parameters
-- criterion: `str` or PyTorch loss function (default = 'binary_cross_entropy')
-- optimiser: `str` or PyTorch optimiser (default = 'adamw')
+- criterion: `str` or valid loss function (default = 'binary_cross_entropy')
+- optimiser: `str` or PyTorch `Optimizer` (default = 'adamw')
 - scheduler: `str` or PyTorch scheduler (default = 'reduce_on_plateau')
 - metrics: `str` or function, or an iterable of such (default = [])
 - learning_rate: `float` (default = 3e-4)
