@@ -13,25 +13,25 @@ from .typing import *
 from .metrics import (accuracy, accuracy_with_logits, 
                       samples_f1, samples_f1_with_logits)
 
-def str2optim(optimiser: Optimiserlike, model: Module) -> Optimiser:
+def str2optim(optimiser: Optimiserlike, model: Module, lr: float) -> Optimiser:
     if not isinstance(optimiser, str):
         return optimiser
     elif optimiser == 'adam':
-        return adam.Adam(model.parameters())
+        return adam.Adam(model.parameters(), lr = lr)
     elif optimiser == 'adadelta':
-        return adadelta.Adadelta(model.parameters())
+        return adadelta.Adadelta(model.parameters(), lr = lr)
     elif optimiser == 'adagrad':
-        return adagrad.Adagrad(model.parameters())
+        return adagrad.Adagrad(model.parameters(), lr = lr)
     elif optimiser == 'adamw':
-        return adamw.AdamW(model.parameters())
+        return adamw.AdamW(model.parameters(), lr = lr)
     elif optimiser == 'sparse_adam':
-        return sparse_adam.SparseAdam(model.parameters())
+        return sparse_adam.SparseAdam(model.parameters(), lr = lr)
     elif optimiser == 'adamax':
-        return adamax.Adamax(model.parameters())
+        return adamax.Adamax(model.parameters(), lr = lr)
     elif optimiser == 'rmsprop':
-        return rmsprop.RMSprop(model.parameters())
+        return rmsprop.RMSprop(model.parameters(), lr = lr)
     elif optimiser == 'sgd':
-        return sgd.SGD(model.parameters(), lr = 3e-4)
+        return sgd.SGD(model.parameters(), lr = lr)
     else:
         raise RuntimeError(f'Optimiser {optimiser} not found.')
 
