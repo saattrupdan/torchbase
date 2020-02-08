@@ -47,12 +47,12 @@ class ModuleWrapper:
     save: Function = save
     save_model: Function = save_model
     plot: Function = plot
-    load: Function = classmethod(load)
+    load: classmethod = classmethod(load)
 
     def __init__(self, *args, **kwargs):
         from .metrics import MetricObject
 
-        self.model: Wrapper = type(self)._model_class(*args, **kwargs)
+        self.model: Module = type(self)._model_class(*args, **kwargs)
         self.model_name: str = type(self)._model_class.__name__
         self.optimiser: Optimiserlike = type(self)._optimiser
         self.scheduler: Schedulerlike = type(self)._scheduler
