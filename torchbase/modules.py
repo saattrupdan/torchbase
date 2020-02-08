@@ -1,7 +1,6 @@
 import torch
 import logging
 from pathlib import Path
-from functools import cmp_to_key
 from .training import train_model
 from .plotting import plot
 from .utils import str2optim, str2crit
@@ -26,65 +25,79 @@ class ModuleWrapper:
             Verbosity level
     '''
 
-    _model_class = None
-    _optimiser = None
-    _scheduler = None
-    _criterion = None
-    _metrics = None
-    _data_dir = None
-    _verbose = None
+    _model_class: nType = None
+    _optimiser: nOptimiserlike = None
+    _scheduler: nSchedulerlike = None
+    _criterion: nCriterionlike = None
+    _metrics: nMetriclikes = None
+    _data_dir: nPathlike = None
+    _verbose: nInt = None
+    _tensorboard: nBool = None
+    _monitor: nStr = None
+    _minimise_monitor: nBool = None
+    _target_value: nFloat = None
+    _patience: nNumeric = None
+    _smoothing: nFloat = None
+    _save_model: nBool = None
+    _overwrite: nBool = None
+    _learning_rate: nFloat = None
 
     # Fetch methods from other modules
-    fit = train_model
-    save = save
-    save_model = save_model
-    plot = plot
-    load = classmethod(load)
+    fit: Function = train_model
+    save: Function = save
+    save_model: Function = save_model
+    plot: Function = plot
+    load: Function = classmethod(load)
 
     def __init__(self, *args, **kwargs):
         from .metrics import MetricObject
 
-        self.model = type(self)._model_class(*args, **kwargs)
-        self.model_name = type(self)._model_class.__name__
-        self.optimiser = type(self)._optimiser
-        self.scheduler = type(self)._scheduler
-        self.criterion = type(self)._criterion
-        self.data_dir = Path(str(type(self)._data_dir))
-        self.verbose = type(self)._verbose
-        self.history = {'loss': [], 'val_loss': []}
+        self.model: Wrapper = type(self)._model_class(*args, **kwargs)
+        self.model_name: str = type(self)._model_class.__name__
+        self.optimiser: Optimiserlike = type(self)._optimiser
+        self.scheduler: Schedulerlike = type(self)._scheduler
+        self.criterion: Criterionlike = type(self)._criterion
+        self.monitor: str = type(self)._monitor
+        self.minimise_monitor: nBool = type(self)._minimise_monitor
+        self.target_value: nFloat = type(self)._target_value
+        self.patience: nNumeric = type(self)._patience
+        self.smoothing: float = type(self)._smoothing
+        self.save_model: bool = type(self)._save_model
+        self.overwrite: bool = type(self)._overwrite
+        self.tensorboard: bool = type(self)._tensorboard
+        self.data_dir: Path = Path(str(type(self)._data_dir))
+        self.verbose: int = type(self)._verbose
+        self.history: History = {'loss': [], 'val_loss': []}
 
         # Initialise criterion, optimiser and scheduler
         if isinstance(self.criterion, str):
             self.criterion = str2crit(self.criterion)
         if isinstance(self.optimiser, str):
-            self.optimiser = str2optim(self.optimiser, self.model)
+            self.optimiser = str2optim(self.optimiser, self.model,
+                lr = type(self)._learning_rate)
 
         # Initialise metrics
         if not isinstance(type(self)._metrics, list):
-            unique_metrics = {type(self)._metrics}
+            unique_metrics: set = {type(self)._metrics}
         else:
-            unique_metrics = set(type(self)._metrics)
+            unique_metrics: set = set(type(self)._metrics)
         unique_metrics.add('loss')
         unique_metrics = {metric for metric in unique_metrics 
                           if metric[:4] != 'val_'}
-        sorted_metrics = ['loss'] + sorted(unique_metrics - {'loss'})
-        self.metrics = [MetricObject(metric, self, val = False) 
+        sorted_metrics: list = ['loss'] + sorted(unique_metrics - {'loss'})
+        self.metrics: Metrics = [MetricObject(metric, self, val = False) 
                         for metric in sorted_metrics]
         self.metrics += [MetricObject(metric, self, val = True) 
                          for metric in sorted_metrics]
 
         # Set up logging
-        logging.basicConfig()
-        logging.root.setLevel(logging.NOTSET)
-        self.logger = logging.getLogger()
-
-        # Set logging level
-        if self.verbose == 0:
-            self.logger.setLevel(logging.WARNING)
-        elif self.verbose == 1:
-            self.logger.setLevel(logging.INFO)
-        elif self.verbose == 2:
-            self.logger.setLevel(logging.DEBUG)
+        logging_levels = [logging.WARNING, logging.INFO, logging.DEBUG]
+        self.logger = logging.getLogger(self.model_name)
+        self.logger.setLevel(logging_levels[self.verbose])
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter('[%(levelname)s] %(message)s'))
+        handler.setLevel(logging_levels[self.verbose])
+        self.logger.addHandler(handler)
 
     def trainable_params(self) -> int:
         ''' Returns the number of trainable parameters in the model. '''
