@@ -1,4 +1,4 @@
-from typing import Callable, Sequence, Union, Iterable, TypeVar, Sequence 
+from typing import Callable, Union, Iterable, Sequence, Dict
 from pathlib import Path
 import torch
 import torch.utils.data as data
@@ -30,10 +30,12 @@ LongTensor = torch.LongTensor
 # Functions
 Function = Callable
 Functionlike = Union[Function, str]
+nFunctionlike = Union[Functionlike, None]
 
 # Criterions
 Criterion = loss._Loss
 Criterionlike = Union[loss._Loss, str]
+nCriterionlike = Union[Criterionlike, None]
 
 # A type with the same signature as Metric, to fool MyPy
 class Metric:
@@ -44,30 +46,36 @@ class Metric:
     def __call__(self, pred: Tensor, true: Tensor) -> float: pass
 
 # Metrics
-Metriclike = Union[Metric, str]
 Metrics = Sequence[Metric]
+Metriclike = Union[Metric, Callable, str]
 Metriclikes = Sequence[Metriclike]
+nMetriclikes = Union[Metriclikes, None]
 MetriclikesOrString = Union[Metriclikes, str]
-nMetriclikesOrString = Union[Metriclikes, str, None]
+nMetriclikesOrString = Union[MetriclikesOrString, None]
 
 # Optimisers
 Optimiser = optim.Optimizer
 Optimiserlike = Union[optim.Optimizer, str]
-nOptimiserlike = Union[optim.Optimizer, str, None]
+nOptimiserlike = Union[Optimiserlike, None]
 
 # Schedulers
 Scheduler = Union[sched._LRScheduler, sched.ReduceLROnPlateau]
-Schedulerlike = Union[sched._LRScheduler, str]
-nSchedulerlike = Union[sched._LRScheduler, str, None]
+Schedulerlike = Union[Scheduler, str]
+nSchedulerlike = Union[Schedulerlike, None]
 
 # DataLoaders
 DataLoader = data.DataLoader
 nDataLoader = Union[data.DataLoader, None]
 
+# Paths
+Pathlike = Union[Path, str]
+nPathlike = Union[Pathlike, None]
+
 # Misc
 Module = torch.nn.Module
 Decorator = Callable
-Pathlike = Union[Path, str]
+History = Dict[str, float]
+nType = Union[type, None]
 
 # A type with the same signature as ModuleWrapper, to fool MyPy
 class Wrapper:
