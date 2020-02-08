@@ -33,8 +33,9 @@ Functionlike = Union[Function, str]
 nFunctionlike = Union[Functionlike, None]
 
 # Criterions
-Criterion = loss._Loss
-Criterionlike = Union[loss._Loss, str]
+Criterion = Union[Callable[[torch.FloatTensor, torch.FloatTensor], float], 
+    loss._Loss]
+Criterionlike = Union[Criterion, str]
 nCriterionlike = Union[Criterionlike, None]
 
 # A type with the same signature as Metric, to fool MyPy
@@ -89,6 +90,15 @@ class Wrapper:
         self.data_dir = None
         self.model_name = None
         self.logger = None
+        self.monitor = None
+        self.minimise_monitor = None
+        self.target_value = None
+        self.patience = None
+        self.smoothing = None
+        self.save_model = None
+        self.overwrite = None
+        self.tensorboard = None
+        self.verbose = None
     def trainable_params(self) -> int: pass
     def fit(*args, **kwargs): pass
     def save(self, postfix: str): pass
