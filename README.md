@@ -31,7 +31,7 @@ See `mnist_example.py` for the full example, but here are the essential parts:
 >>> 
 >>> net = Net()
 >>> net.fit(train_dl, val_dl)
-[INFO] Training on 60,000 samples and validation on 10,016 samples
+[INFO] Training on 60,000 samples and validating on 10,016 samples
 [INFO] Number of trainable parameters: 79,510
 Epoch  0 - loss 0.1930 - accuracy 0.9342 - val_loss 0.1638 - val_accuracy 0.9427: 100%|███████████████████████████████| 60000/60000 [00:08<00:00, 6695.25it/s]
 (...)
