@@ -1,4 +1,4 @@
-from torchbase import magic
+from basetorch import magic
 import torch
 
 def get_mnist_dataloaders():

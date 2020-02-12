@@ -1,6 +1,4 @@
-<h1 align=center>
-  <img alt="TorchBase" src="gfx/title.png" height=60px>
-</h1>
+# baseTorch
 
 A simple decorator that allows you to `fit` and `plot` your PyTorch model.
 
@@ -12,7 +10,7 @@ Requires `torch`, `tqdm` and `matplotlib`.
 See `mnist_example.py` for the full example, but here are the essential parts:
 
 ```python
->>> from torchbase import magic
+>>> from basetorch import magic
 >>> 
 >>> @magic('categorical_cross_entropy', metrics = 'accuracy_with_logits')
 ... class Net(torch.nn.Module):
